@@ -1921,7 +1921,10 @@ class PFHamiltonianGenerator:
         """
 
         #H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
+        sing_start = time.time()
         singlet_indices = self.sort_dipole_allowed_states(n_el)
+        sing_end = time.time()
+        print(F'Time to sort singlets is {sing_end-sing_start} seconds')
         # see how singlets there are from this sorting!
         num_singlets = len(singlet_indices)
 
@@ -1937,8 +1940,12 @@ class PFHamiltonianGenerator:
 
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
         mu_array = np.zeros((n_el, n_el, 3))
+
         E_R = self.CIeigs[singlet_indices]
+        mu_start = time.time()
         mu_array = self.compute_dipole_moments(singlet_indices)
+        mu_end = time.time()
+        print(F'Time to compute mu array is {mu_end-mu_start} seconds')
 
         # create identity array of dimensions n_el x n_el
         _I = np.eye(n_el)
@@ -1949,16 +1956,85 @@ class PFHamiltonianGenerator:
         # create the array _O of omega values
         _O = omega * _I
 
-        for n in range(n_ph):
-            b_idx = n * n_el
-            f_idx = (n + 1) * n_el
-            self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O
 
         # create an array d = \lambda * mu
-        _d = np.zeros((n_el, n_el))
-        for a in range(n_el):
-            for b in range(n_el):
-                _d[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
+        #_d = np.zeros((n_el, n_el))
+        #for a in range(n_el):
+        #    for b in range(n_el):
+        #        _d[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
+
+        _d = np.einsum("k,ijk->ij",lambda_vector, mu_array)
+
+        #assert np.allclose(_d_es, _d)
+
+        # compute _D_mm as _d @ _d
+        mm_start = time.time()
+        _D_mm = _d @ _d
+        mm_end = time.time()
+
+        #print("_d matrix is")
+        #print(_d)
+        #print("G matrix is")
+        #print(-np.sqrt(omega/2) * _d)
+
+        #loop_start = time.time()
+        #_D_loop = np.zeros((n_el, n_el))
+        #for a in range(n_el):
+        #    for b in range(n_el):
+        #        _D_sum = 0
+        #        for g in range(n_el):
+        #            _D_sum += _d[a,g] * _d[g,b]
+        #        _D_loop[a, b] = _D_sum
+        #loop_end = time.time()
+
+        #assert np.allclose(_D_mm, _D_loop)
+        #print(F"Time required for loop build is {loop_end - loop_start} seconds")
+        print(F"Time required for mm build is   {mm_end - mm_start} seconds")
+
+        for n in range(n_ph):
+            # diagonal indices
+            b_idx = n * n_el
+            f_idx = (n + 1) * n_el
+            # diagonal entries
+            self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O + 0.5 * _D_mm
+
+            # off-diagonal entries
+            if n == 0:
+                m = n + 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d   * np.sqrt(m)
+ 
+            elif n == (n_ph - 1):
+                m = n - 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m+1)
+
+            else:
+                m = n + 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m)
+
+                m = n - 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m+1)
+
+
 
         # take care of the diagonals first
         # bare electronic and photonic energy
@@ -1968,40 +2044,40 @@ class PFHamiltonianGenerator:
         #        self.PCQED_H_PF[na,na] = E_R[a] + n * omega
             
         # diagonal dipole self energy
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                for g in range(n_el):
-                    self.PCQED_H_PF[na,na] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g,a,:])
+        #for n in range(n_ph):
+        #    for a in range(n_el):
+        #        na = n * n_el + a
+        #        for g in range(n_el):
+        #            self.PCQED_H_PF[na,na] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g,a,:])
                 
         # off-diagonal dipole self energy
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                for b in range(n_el):
-                    nb = n * n_el + b
-                    for g in range(n_el):
-                        if a != b:
-                            self.PCQED_H_PF[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])
+        #for n in range(n_ph):
+        #    for a in range(n_el):
+        #        na = n * n_el + a
+        #        for b in range(n_el):
+        #            nb = n * n_el + b
+        #            for g in range(n_el):
+        #                if a != b:
+        #                    self.PCQED_H_PF[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])
                     
         # off-diagonal bilinear coupling
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
+        #for n in range(n_ph):
+        #    for a in range(n_el):
+        #        na = n * n_el + a
                 
-                for m in range(n_ph):
-                    for b in range(n_el):
-                        mb = m * n_el + b
+        #        for m in range(n_ph):
+        #            for b in range(n_el):
+        #                mb = m * n_el + b
                         
-                        if n == (m-1) and a != b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
+        #                if n == (m-1) and a != b:
+        #                    #print(n, a, na, m, b, mb)
+        #                    self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
+        #                    self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
                             
-                        elif n == (m+1) and a != b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
+        #                elif n == (m+1) and a != b:
+        #                    #print(n, a, na, m, b, mb)
+        #                    self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
+        #                    self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
 
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
         self.PCQED_eigs = np.copy(eigs)
@@ -2082,12 +2158,12 @@ class PFHamiltonianGenerator:
                     for b in range(n_el):
                         mb = m * n_el + b
                         
-                        if n == (m-1) and a != b:
+                        if n == (m-1) and a!=b:
                             #print(n, a, na, m, b, mb)
                             self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
                             self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
                             
-                        elif n == (m+1) and a != b:
+                        elif n == (m+1) and a!=b:
                             #print(n, a, na, m, b, mb)
                             self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
                             self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
