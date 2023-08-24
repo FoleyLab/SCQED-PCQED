@@ -1892,7 +1892,8 @@ class PFHamiltonianGenerator:
                 _sing_idx += 1
 
         return _singlet_states
-    
+
+
     def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector): #, E_R, omega, lamvec, mu):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
@@ -1918,6 +1919,7 @@ class PFHamiltonianGenerator:
             state i and state j
 
         """
+
         #H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
         singlet_indices = self.sort_dipole_allowed_states(n_el)
         # see how singlets there are from this sorting!
@@ -1929,18 +1931,41 @@ class PFHamiltonianGenerator:
             print(F" There are only {num_singlets} available!")
             print(F" Reducing the size of the electronic subspace accordingly!")
             n_el = num_singlets
-    
+
+        
+
+
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
         mu_array = np.zeros((n_el, n_el, 3))
         E_R = self.CIeigs[singlet_indices]
         mu_array = self.compute_dipole_moments(singlet_indices)
 
+        # create identity array of dimensions n_el x n_el
+        _I = np.eye(n_el)
+
+        # create the array _A of electronic energies
+        _A = E_R * _I
+
+        # create the array _O of omega values
+        _O = omega * _I
+
+        for n in range(n_ph):
+            b_idx = n * n_el
+            f_idx = (n + 1) * n_el
+            self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O
+
+        # create an array d = \lambda * mu
+        _d = np.zeros((n_el, n_el))
+        for a in range(n_el):
+            for b in range(n_el):
+                _d[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
+
         # take care of the diagonals first
         # bare electronic and photonic energy
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                self.PCQED_H_PF[na,na] = E_R[a] + n * omega
+        #for n in range(n_ph):
+        #    for a in range(n_el):
+        #        na = n * n_el + a
+        #        self.PCQED_H_PF[na,na] = E_R[a] + n * omega
             
         # diagonal dipole self energy
         for n in range(n_ph):
