@@ -1926,13 +1926,13 @@ class PFHamiltonianGenerator:
         _I = np.eye(n_el)
 
         # create the array _A of electronic energies
-        _A = E_array * _I
+        _A = E_array[:n_el] * _I
 
         # create the array _O of omega values
         _O = omega * _I
 
         # create _d array using einsum
-        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array)
+        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
 
         # create D array using matrix multiplication
         _D = 1/2 * _d @ _d
