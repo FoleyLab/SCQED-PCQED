@@ -1966,48 +1966,27 @@ class PFHamiltonianGenerator:
                         if a != b:
                             H_PF_loop[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])   
         print(F'D matrix from loop way {H_PF_loop}')
-        # mat_A = np.dot(lambda_vector, mu_array)
-        # mat_B = np.dot(lambda_vector, mu_array)  
-        # D_loop = np.zeros((n_el, n_ph))
-        # for a in range(n_el):
-        #     for b in range(n_ph):
-        #         for n in range(n_ph):
-        #             D_loop[a,b] += mat_A[a,n]* mat_B[n,b] 
-
-        # _d_1 = np.zeros((n_el, n_el))
-        # for a in range(n_el):
-        #     for b in range(n_el):
-        #         _d_1[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
-
-        # _d_2 = np.zeros((n_el, n_el))
-        # for c in range(n_el):
-        #     for d in range(n_el):
-        #         _d_2[c, d] = np.dot(lambda_vector, mu_array[c, d, :])
+       
         d_loop_end = time.time()
 
         
         D_es_start = time.time()
-        # 3. Einsum based -> D_es;
-        _d_es_1 = np.einsum("k,ijk->ij", lambda_vector, mu_array)
-        _d_es_2 = np.einsum("i,jki->jk", lambda_vector, mu_array)
-        D_en = np.einsum("ij,jk->ik", _d_es_1, _d_es_2)
+        # 2. Einsum based -> D_es;
+        _d_es = np.einsum("k,ijk->ij", lambda_vector, mu_array)
+        D_en = np.einsum("ij,jk->ik", _d_es, _d_es)
     
         D_es_end = time.time()
-        print(f'matrix from einsum{_d_es_1}')
+        print(f'matrix from einsum{D_en}')
 
-        # d_mm_start = time.time()
-        # 2. Matrix multiplication -> D_mm = d @ d
-        # d_ag = np.dot(lambda_vector, mu_array)
-        # d_gb = np.dot(lambda_vector, mu_array)
-        # lam_vec = np.array(lambda_vector)
-        # d_ag = lam_vec @ mu_array
-        # d_gb = lam_vec @ mu_array
-        # D_mm = d_ag @ d_gb
-        # d_mm_end = time.time()
+        d_mm_start = time.time()
+        # 3. Matrix multiplication -> D_mm = d @ d
+        D_mm = _d_es @ _d_es
+        d_mm_end = time.time()
+        print(f'matrix from matrix multiplication {D_mm}')
 
         print('Time to build d with loops is :{:10f}seconds'.format(d_loop_end-d_loop_start))
         print('Time to build d with einsum is :{:10f}seconds'.format(D_es_end-D_es_start))
-        # print(F'Time to build d with matrixmultiplication is {d_mm_end-d_mm_start} seconds')
+        print('Time to build d with matrixmultiplication is : {:10f}seconds'.format(d_mm_end-d_mm_start))
 
         # 4. Check to make sure each method yields the same result using, 
         # assert np.allclose(D_loop,D_mm)
