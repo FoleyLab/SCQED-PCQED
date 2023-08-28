@@ -1948,54 +1948,14 @@ class PFHamiltonianGenerator:
 
         # create an array d = \lambda * mu
         d_loop_start = time.time()
-        _d = np.zeros((n_el, n_el))
-        for a in range(n_el):
-            for b in range(n_el):
-                _d[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
-        D_loop =_d[a,b]
-        d_loop_end = time.time()
-
-        d_es_start = time.time()
-        # 3. Einsum based -> D_es;
-        _d_es = np.einsum("k,ijk->ij", lambda_vector, mu_array)
-        d_es_end = time.time()
-
-        d_mm_start = time.time()
-        # 2. Matrix multiplication -> D_mm = d @ d
-        
-        # d_ag = np.dot(lambda_vector, mu_array)
-        # d_gb = np.dot(lambda_vector, mu_array)
-        lam_vec = np.array(lambda_vector)
-        print(np.shape(lem_vec))
-        # d_ag = lam_vec @ mu_array
-        # d_gb = lam_vec @ mu_array
-        # D_mm = d_ag @ d_gb
-        d_mm_end = time.time()
-
-        print(F'Time to build d with loops is  {d_loop_end-d_loop_start} seconds')
-        print(F'Time to build d with einsum is {d_es_end-d_es_start} seconds')
-        print(F'Time to build d with matrixmultiplication is {d_mm_end-d_mm_start} seconds')
-
-        # 4. Check to make sure each method yields the same result using, 
-        assert np.allclose(D_loop, _d_es)
-        assert np.allclose(D_loop,D_mm)
-        assert np.allclose(_d_es,D_mm)
-
-
-        # take care of the diagonals first
-        # bare electronic and photonic energy
-        #for n in range(n_ph):
-        #    for a in range(n_el):
-        #        na = n * n_el + a
-        #        self.PCQED_H_PF[na,na] = E_R[a] + n * omega
-            
+        H_PF_loop = np.zeros((n_el * n_ph, n_el * n_ph))
         # diagonal dipole self energy
         for n in range(n_ph):
             for a in range(n_el):
                 na = n * n_el + a
                 for g in range(n_el):
-                    self.PCQED_H_PF[na,na] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g,a,:])
-                
+                    H_PF_loop[na,na] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g,a,:])
+            
         # off-diagonal dipole self energy
         for n in range(n_ph):
             for a in range(n_el):
@@ -2004,30 +1964,55 @@ class PFHamiltonianGenerator:
                     nb = n * n_el + b
                     for g in range(n_el):
                         if a != b:
-                            self.PCQED_H_PF[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])
-                    
-        # off-diagonal bilinear coupling
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                
-                for m in range(n_ph):
-                    for b in range(n_el):
-                        mb = m * n_el + b
-                        
-                        if n == (m-1) and a != b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            
-                        elif n == (m+1) and a != b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
+                            H_PF_loop[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])   
+        print(F'D matrix from loop way {H_PF_loop}')
+        # mat_A = np.dot(lambda_vector, mu_array)
+        # mat_B = np.dot(lambda_vector, mu_array)  
+        # D_loop = np.zeros((n_el, n_ph))
+        # for a in range(n_el):
+        #     for b in range(n_ph):
+        #         for n in range(n_ph):
+        #             D_loop[a,b] += mat_A[a,n]* mat_B[n,b] 
 
-        eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
-        self.PCQED_eigs = np.copy(eigs)
-        self.PCQED_vecs = np.copy(vecs)
+        # _d_1 = np.zeros((n_el, n_el))
+        # for a in range(n_el):
+        #     for b in range(n_el):
+        #         _d_1[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
+
+        # _d_2 = np.zeros((n_el, n_el))
+        # for c in range(n_el):
+        #     for d in range(n_el):
+        #         _d_2[c, d] = np.dot(lambda_vector, mu_array[c, d, :])
+        d_loop_end = time.time()
+
+        
+        D_es_start = time.time()
+        # 3. Einsum based -> D_es;
+        _d_es_1 = np.einsum("k,ijk->ij", lambda_vector, mu_array)
+        _d_es_2 = np.einsum("i,jki->jk", lambda_vector, mu_array)
+        D_en = np.einsum("ij,jk->ik", _d_es_1, _d_es_2)
+    
+        D_es_end = time.time()
+        print(f'matrix from einsum{_d_es_1}')
+
+        # d_mm_start = time.time()
+        # 2. Matrix multiplication -> D_mm = d @ d
+        # d_ag = np.dot(lambda_vector, mu_array)
+        # d_gb = np.dot(lambda_vector, mu_array)
+        # lam_vec = np.array(lambda_vector)
+        # d_ag = lam_vec @ mu_array
+        # d_gb = lam_vec @ mu_array
+        # D_mm = d_ag @ d_gb
+        # d_mm_end = time.time()
+
+        print('Time to build d with loops is :{:10f}seconds'.format(d_loop_end-d_loop_start))
+        print('Time to build d with einsum is :{:10f}seconds'.format(D_es_end-D_es_start))
+        # print(F'Time to build d with matrixmultiplication is {d_mm_end-d_mm_start} seconds')
+
+        # 4. Check to make sure each method yields the same result using, 
+        # assert np.allclose(D_loop,D_mm)
+        # assert np.allclose(D_en,H_PF_loop)
+
     
     def build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector): #, E_R, omega, lamvec, mu):
         """
