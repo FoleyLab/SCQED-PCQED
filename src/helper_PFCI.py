@@ -1933,9 +1933,10 @@ class PFHamiltonianGenerator:
 
         # create _d array using einsum
         _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        _d_exp = _d[0,0]
 
         # create D array using matrix multiplication
-        _D = 1/2 * _d @ _d
+        _D = 1/2 * _d @ _d + 1/2 *(_d)^2 - _d
 
         for n in range(n_ph):
             # diagonal indices
@@ -1961,7 +1962,7 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m+1)
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) *() _d * np.sqrt(m+1)
 
             else:
                 m = n + 1
