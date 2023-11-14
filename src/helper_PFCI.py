@@ -1936,7 +1936,7 @@ class PFHamiltonianGenerator:
         _d_exp = _d[0,0]
 
         # create D array using matrix multiplication
-        _D = 1/2 * _d @ _d + 1/2 *(_d_exp)^2 - _d_exp * _d
+        _D = 1/2 * _d @ _d + 1/2 *(_d_exp)**2 - _d_exp * _d
 
         for n in range(n_ph):
             # diagonal indices
