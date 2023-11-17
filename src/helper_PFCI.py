@@ -1894,7 +1894,7 @@ class PFHamiltonianGenerator:
 
         return _singlet_states
     
-    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector): #, E_R, omega, lamvec, mu):
+    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -1905,151 +1905,181 @@ class PFHamiltonianGenerator:
         n_ph : int
             the number of photon occupation states (n_ph = 1 means only the |0> state)
 
-        E_R : np.array of floats
+        omega : float
+            the photon frequency
+
+        lambda_vector : numpy array of floats
+            the lambda vector
+
+        E_array : n_el np.array of floats
             the electronic energies
             
-        omega : float
-            the energy of the photonic mode
-            
-        lamvec : np.array of floats
-            the lambda vector
-            
-        mu : (n_el x n_el x 3) np.array of floats 
+        mu_array : (n_el x n_el x 3) np.array of floats 
             mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between 
             state i and state j
 
+
         """
-        #H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
-        singlet_indices = self.sort_dipole_allowed_states(n_el)
-        # see how singlets there are from this sorting!
-        num_singlets = len(singlet_indices)
-
-        # check if there are fewer singlets than the desired number of electronic states
-        if num_singlets < n_el:
-            print(F" There are not {n_el} singlet states!")
-            print(F" There are only {num_singlets} available!")
-            print(F" Reducing the size of the electronic subspace accordingly!")
-            n_el = num_singlets
-    
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
-        mu_array = np.zeros((n_el, n_el, 3))
-        E_R = self.CIeigs[singlet_indices]
-        mu_array = self.compute_dipole_moments(singlet_indices)
 
-        
         # create identity array of dimensions n_el x n_el
         _I = np.eye(n_el)
 
         # create the array _A of electronic energies
-        _A = E_R * _I
+        _A = E_array[:n_el] * _I
 
         # create the array _O of omega values
         _O = omega * _I
 
-        # create an array d = \lambda * mu
-        _d = np.zeros((n_el, n_el))
-        for a in range(n_el):
-            for b in range(n_el):
-                _d[a, b] = np.dot(lambda_vector, mu_array[a, b, :])
+        # create _d array using einsum
+        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        _d_exp = _d[0,0]
 
-        # try the following different approaches to compute D_ab = \sum_g d_ag * d_gb
-        # timing each one and printing the time elapsed
-        # off-diagonal bilinear coupling
+        # create D array using matrix multiplication
+        _D = 1/2 * _d @ _d 
+
         for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
+            # diagonal indices
+            b_idx = n * n_el
+            f_idx = (n + 1) * n_el
+            # diagonal entries
+            self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O + _D
+
+            # off-diagonal entries
+            if n == 0:
+                m = n + 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
+ 
+            elif n == (n_ph - 1):
+                m = n - 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
+
+            else:
+                m = n + 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m)
+
+                m = n - 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
                 
-                for m in range(n_ph):
-                    for b in range(n_el):
-                        mb = m * n_el + b
-                        
-                        if n == (m-1) and a!=b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            
-                        elif n == (m+1) and a!=b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
-        # 1. Loop based -> D_ab_loop using nested for loops
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                for g in range(n_el):
-                    D_ab_loop = np.dot(lam_array, mu_array[a,g,:]) * np.dot(lam_array, mu_array[g,a,:])
                 
-        # 2. Matrix multiplication -> D_mm = d @ d
-        d_ag = np.dot(lam_array, mu_array[a, b, :])
-        d_gb = np.dot(lam_array, mu_array[a, b, :])
-        D_mm = d_ag @ d_gb
-
-        # 3. Einsum based -> D_es;  look at the documentation for np.einsum: https://ajcr.net/Basic-guide-to-einsum/ 
-        D_es = np.einsum('ij,jk->ik', d_ag, d_gb)
-        # 4. Check to make sure each method yields the same result using, 
-        # e.g. assert np.allclose(D_ab_loop, D_mm), etc
-        assert np.allclose(D_ab_loop, D_mm)
-        assert np.allclose(D_es, D_mm)
-        # for n in range(n_ph):
-        #     b_idx = n * n_el
-        #     f_idx = (n + 1) * n_el
-        #     self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O
-
-
-        D_es_T = timeit.timeit(f'Time needed with einsum is',D_es)
-        D_ab_loop_T = timeit.timeit(f'Time needed with loop is',D_ab_loop)
-        D_mm = timeit.timeit(D_mm)
-
-
-
-        # take care of the diagonals first
-        # bare electronic and photonic energy
-        #for n in range(n_ph):
-        #    for a in range(n_el):
-        #        na = n * n_el + a
-        #        self.PCQED_H_PF[na,na] = E_R[a] + n * omega
-            
-        # diagonal dipole self energy
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                for g in range(n_el):
-                    self.PCQED_H_PF[na,na] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g,a,:])
-                
-        # off-diagonal dipole self energy
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                for b in range(n_el):
-                    nb = n * n_el + b
-                    for g in range(n_el):
-                        if a != b:
-                            self.PCQED_H_PF[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])
-                    
-        # off-diagonal bilinear coupling
-        for n in range(n_ph):
-            for a in range(n_el):
-                na = n * n_el + a
-                
-                for m in range(n_ph):
-                    for b in range(n_el):
-                        mb = m * n_el + b
-                        
-                        if n == (m-1) and a != b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            
-                        elif n == (m+1) and a != b:
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
-
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
-        self.PCQED_eigs = np.copy(eigs)
-        self.PCQED_vecs = np.copy(vecs)
+        self.PCQED_pf_eigs = np.copy(eigs)
+        self.PCQED_pf_vecs = np.copy(vecs)
     
-    def build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector): #, E_R, omega, lamvec, mu):
+    def fast_build_pcqed_cs_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array):
+        """
+        Given an array of n_el E_R values and an n_ph states with fundamental energy omega
+        build the PF Hamiltonian
+
+        n_el : int
+            the number of electronic states (n_el = 1 means only ground-state)
+
+        n_ph : int
+            the number of photon occupation states (n_ph = 1 means only the |0> state)
+
+        omega : float
+            the photon frequency
+
+        lambda_vector : numpy array of floats
+            the lambda vector
+
+        E_array : n_el np.array of floats
+            the electronic energies
+            
+        mu_array : (n_el x n_el x 3) np.array of floats 
+            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between 
+            state i and state j
+
+
+        """
+        self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
+
+        # create identity array of dimensions n_el x n_el
+        _I = np.eye(n_el)
+
+        # create the array _A of electronic energies
+        _A = E_array[:n_el] * _I
+
+        # create the array _O of omega values
+        _O = omega * _I
+
+        # create _d array using einsum
+        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        _d_exp = _d[0,0]
+
+        # create D array using matrix multiplication
+        _D = 1/2 * _d @ _d + 1/2 * (_d_exp)**2 * _I - _d_exp * _d
+
+        for n in range(n_ph):
+            # diagonal indices
+            b_idx = n * n_el
+            f_idx = (n + 1) * n_el
+            # diagonal entries
+            self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O + _D
+
+            # off-diagonal entries
+            if n == 0:
+                m = n + 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* (_d  - _d_exp * _I)   * np.sqrt(m)
+ 
+            elif n == (n_ph - 1):
+                m = n - 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * (_d - _d_exp * _I) * np.sqrt(m+1)
+
+            else:
+                m = n + 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * (_d - _d_exp * _I) * np.sqrt(m)
+
+                m = n - 1
+                bra_s = n * n_el
+                bra_e = (n + 1) * n_el
+                ket_s = m * n_el
+                ket_e = (m + 1) * n_el
+
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * (_d - _d_exp * _I) * np.sqrt(m+1)
+                
+                
+        eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
+        self.PCQED_cs_eigs = np.copy(eigs)
+        self.PCQED_cs_vecs = np.copy(vecs)
+
+    
+    def build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_R, mu_array): #, E_R, omega, lamvec, mu):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -2074,22 +2104,8 @@ class PFHamiltonianGenerator:
             state i and state j
 
         """
-        #H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
-        singlet_indices = self.sort_dipole_allowed_states(n_el)
-        # see how singlets there are from this sorting!
-        num_singlets = len(singlet_indices)
-
-        # check if there are fewer singlets than the desired number of electronic states
-        if num_singlets < n_el:
-            print(F" There are not {n_el} singlet states!")
-            print(F" There are only {num_singlets} available!")
-            print(F" Reducing the size of the electronic subspace accordingly!")
-            n_el = num_singlets
-    
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
-        mu_array = np.zeros((n_el, n_el, 3))
-        E_R = self.CIeigs[singlet_indices]
-        mu_array = self.compute_dipole_moments(singlet_indices)
+
 
         # take care of the diagonals first
         # bare electronic and photonic energy
@@ -2124,12 +2140,12 @@ class PFHamiltonianGenerator:
                     for b in range(n_el):
                         mb = m * n_el + b
                         
-                        if n == (m-1) and a != b:
+                        if n == (m-1):
                             #print(n, a, na, m, b, mb)
                             self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
                             self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
                             
-                        elif n == (m+1) and a != b:
+                        elif n == (m+1):
                             #print(n, a, na, m, b, mb)
                             self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
                             self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
