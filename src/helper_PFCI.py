@@ -1935,6 +1935,7 @@ class PFHamiltonianGenerator:
         _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
         _d_exp = _d[0,0]
 
+
         # create D array using matrix multiplication
         _D = 1/2 * _d @ _d 
 
@@ -1985,6 +1986,7 @@ class PFHamiltonianGenerator:
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
         self.PCQED_pf_eigs = np.copy(eigs)
         self.PCQED_pf_vecs = np.copy(vecs)
+      
     
     def fast_build_pcqed_cs_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array):
         """
@@ -2025,7 +2027,9 @@ class PFHamiltonianGenerator:
 
         # create _d array using einsum
         _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        print(f" Value of d are {_d}")
         _d_exp = _d[0,0]
+        print(f" Value of D are {_d_exp} ")
 
         # create D array using matrix multiplication
         _D = 1/2 * _d @ _d + 1/2 * (_d_exp)**2 * _I - _d_exp * _d
