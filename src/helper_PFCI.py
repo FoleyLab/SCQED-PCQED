@@ -1894,7 +1894,7 @@ class PFHamiltonianGenerator:
 
         return _singlet_states
     
-    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array):
+    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -1921,6 +1921,10 @@ class PFHamiltonianGenerator:
 
         """
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
+        self.PCQED_H_EL = np.zeros((n_el * n_ph, n_el * n_ph))
+        self.PCQED_H_PH = np.zeros((n_el * n_ph, n_el * n_ph))
+        self.PCQED_H_DSE = np.zeros((n_el * n_ph, n_el * n_ph))
+        self.PCQED_H_BLC = np.zeros((n_el * n_ph, n_el * n_ph))
 
         # create identity array of dimensions n_el x n_el
         _I = np.eye(n_el)
@@ -1937,7 +1941,10 @@ class PFHamiltonianGenerator:
 
 
         # create D array using matrix multiplication
-        _D = 1/2 * _d @ _d 
+        if neglect_DSE == True:
+            _D = np.zeros_like(_d)
+        else:
+            _D = 1/2 * _d @ _d 
 
         for n in range(n_ph):
             # diagonal indices
@@ -1945,6 +1952,9 @@ class PFHamiltonianGenerator:
             f_idx = (n + 1) * n_el
             # diagonal entries
             self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O + _D
+            self.PCQED_H_EL[b_idx:f_idx, b_idx:f_idx] = _A 
+            self.PCQED_H_DSE[b_idx:f_idx, b_idx:f_idx] = _D
+            self.PCQED_H_PH[b_idx:f_idx, b_idx:f_idx] = n * _O
 
             # off-diagonal entries
             if n == 0:
@@ -1955,6 +1965,7 @@ class PFHamiltonianGenerator:
                 ket_e = (m + 1) * n_el
 
                 self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
  
             elif n == (n_ph - 1):
                 m = n - 1
@@ -1964,6 +1975,7 @@ class PFHamiltonianGenerator:
                 ket_e = (m + 1) * n_el
 
                 self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m+1)
 
             else:
                 m = n + 1
@@ -1973,6 +1985,7 @@ class PFHamiltonianGenerator:
                 ket_e = (m + 1) * n_el
 
                 self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m)
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
 
                 m = n - 1
                 bra_s = n * n_el
@@ -1981,6 +1994,7 @@ class PFHamiltonianGenerator:
                 ket_e = (m + 1) * n_el
 
                 self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
                 
                 
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
