@@ -1894,7 +1894,7 @@ class PFHamiltonianGenerator:
 
         return _singlet_states
     
-    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array):
+    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -1937,7 +1937,10 @@ class PFHamiltonianGenerator:
 
 
         # create D array using matrix multiplication
-        _D = 1/2 * _d @ _d 
+        if neglect_DSE:
+            _D = np.zeros((n_el,n_el))
+        else:
+            _D = 1/2 * _d @ _d 
 
         for n in range(n_ph):
             # diagonal indices
@@ -1988,7 +1991,7 @@ class PFHamiltonianGenerator:
         self.PCQED_pf_vecs = np.copy(vecs)
       
     
-    def fast_build_pcqed_cs_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array):
+    def fast_build_pcqed_cs_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array,neglect_DSE=False):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -2032,7 +2035,10 @@ class PFHamiltonianGenerator:
         print(f" Value of D are {_d_exp} ")
 
         # create D array using matrix multiplication
-        _D = 1/2 * _d @ _d + 1/2 * (_d_exp)**2 * _I - _d_exp * _d
+        if neglect_DSE:
+            _D = np.zeros((n_el,n_el))
+        else:
+            _D = 1/2 * _d @ _d + 1/2 * (_d_exp)**2 * _I - _d_exp * _d
 
         for n in range(n_ph):
             # diagonal indices
