@@ -1894,7 +1894,24 @@ class PFHamiltonianGenerator:
 
         return _singlet_states
     
-    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False):
+    def build_d_array(self, n_el, lambda_vector, mu_array, coherent_state=False):
+        """
+        method to compute the array d = \lambda \cdot \mu if coherent_state==False
+        or d = \lambda \cdot (\mu - <\mu>) if coherent_state == True
+        and store to attribute self.d_array
+        """
+        
+        if coherent_state==False:
+            self.d_array = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+
+        else:
+            _d_exp = _d[0,0]
+            _I = np.eye(n_el)
+            self.d_array = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+            self.d_array = self.d_array - _I * _d_exp
+
+    
+    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False, coherent_state_option=False):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -1920,6 +1937,8 @@ class PFHamiltonianGenerator:
 
 
         """
+
+        
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_EL = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_PH = np.zeros((n_el * n_ph, n_el * n_ph))
@@ -1936,18 +1955,17 @@ class PFHamiltonianGenerator:
         _O = omega * _I
 
         # create _d array using einsum
-        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
-        _d_exp = _d[0,0]
+        # add call to self.build_d_array(lambda_vector, mu_array, coherent_state=False)
+        # and modify the line below so that _d = np.copy(self.d_array)
+        #_d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        #_d_exp = _d[0,0]
+        self.build_d_array(n_el, lambda_vector, mu_array, coherent_state=coherent_state_option)
+        _d = np.copy(self.d_array)
 
 
         # create D array using matrix multiplication
-<<<<<<< HEAD
         if neglect_DSE:
             _D = np.zeros((n_el,n_el))
-=======
-        if neglect_DSE == True:
-            _D = np.zeros_like(_d)
->>>>>>> a79bc2031d8ecd3e6013ff5791e88a80de727ee5
         else:
             _D = 1/2 * _d @ _d 
 
@@ -2005,6 +2023,35 @@ class PFHamiltonianGenerator:
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
         self.PCQED_pf_eigs = np.copy(eigs)
         self.PCQED_pf_vecs = np.copy(vecs)
+
+
+    def compute_first_order_correction(self, E_array, omega, neglect_DSE=False):
+        """
+        Add code to compute the first order energy correction, 
+        - compute first order energy correction term using existing d array
+        - store to attribute self.first_order_energy_correction
+        """
+        pass
+
+    def compute_second_order_correction(self, E_array, omega, neglect_DSE=False ):
+        """
+        Add code to compute the first order energy correction, 
+        - compute first order energy correction term using existing d array
+        - store to attribute self.first_order_energy_correction
+        """
+        pass
+
+    def compute_energy_to_second_order(self, E_array, neglected_DSE_option=False):
+        """
+        Add code to compute the first and second order energy corrections and store the 
+        total energy to second order to the attribute self.pt2_total_energy
+        - call build_d_array
+        - call compute_first_order_correction
+        - call compute_second_order_correctio
+        - sum together with E_array element(s) which hold the zeroth-order energies
+    
+        """
+        pass
       
     
     def fast_build_pcqed_cs_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array,neglect_DSE=False):
