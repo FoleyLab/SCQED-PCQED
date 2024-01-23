@@ -2043,7 +2043,7 @@ class PFHamiltonianGenerator:
             for gamma in range(0, len(E_array)):
                 E_n_1 += self.d_array[mu_n][gamma]*self.d_array[gamma][mu_n]
 
-            E_n_1 = omega* E_n_1 
+            E_n_1 = 1/2 * E_n_1 
             self.first_order_energy_correction = E_n_1      
 
     def compute_second_order_correction(self, E_array, omega, neglect_DSE=False):
