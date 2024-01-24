@@ -2046,6 +2046,9 @@ class PFHamiltonianGenerator:
             E_n_1 = 1/2 * E_n_1 
             self.first_order_energy_correction = E_n_1      
 
+
+
+
     def compute_second_order_correction(self, E_array, omega, neglect_DSE=False):
         """
         Add code to compute the second order energy correction, 
@@ -2060,6 +2063,12 @@ class PFHamiltonianGenerator:
 
         #0 photons
         m_n = 0
+
+
+
+        first_term = 0
+        second_term = 0
+        third_term = 0
         
         for mu_l in range(0, len(E_array)):
                 for m_l in range(max(m_n-1,0), m_n+2):
@@ -2068,10 +2077,10 @@ class PFHamiltonianGenerator:
                     else:
 
                         if m_l == m_n + 1:
-                            E_n_2 +=  ( (self.d_array[mu_l][mu_n] * np.sqrt(m_n+1)) ** 2 )/(E_array[mu_n] - E_array[mu_l] - omega)
+                            first_term +=  ( (self.d_array[mu_l][mu_n] * np.sqrt(m_n+1)) ** 2 )/(E_array[mu_n] - E_array[mu_l] - omega)
 
                         elif m_l  == m_n - 1:
-                            E_n_2 +=  ( (self.d_array[mu_l][mu_n] * np.sqrt(m_n)) ** 2 )/(E_array[mu_n] - E_array[mu_l] + omega)
+                            second_term +=  ( (self.d_array[mu_l][mu_n] * np.sqrt(m_n)) ** 2 )/(E_array[mu_n] - E_array[mu_l] + omega)
 
                         elif m_l  == m_n and neglect_DSE == False:
 
@@ -2082,11 +2091,11 @@ class PFHamiltonianGenerator:
 
 
 
-                            E_n_2 += (numerator**2) / ((E_array[mu_n] - E_array[mu_l]))
+                            third_term += (numerator**2) / ((E_array[mu_n] - E_array[mu_l]))
 
 
 
-        E_n_2 = E_n_2 * omega**2
+        E_n_2 = (omega / 2) * (first_term + second_term) + (0.5 * third_term)
         self.second_order_energy_correction  = E_n_2
 
 
@@ -2101,14 +2110,13 @@ class PFHamiltonianGenerator:
     
         """
 
+        #lambda_vector = np.sqrt(1/(2 * self.omega))  * lambda_vector
 
-        lambda_vector = np.sqrt(1/(2 * self.omega))  * lambda_vector
-
-        print(lambda_vector)
+        #print(lambda_vector)
 
         self.build_d_array(E_array.shape[0], lambda_vector, mu_array, coherent_state=coherent_state )
 
-        print(self.d_array[0:4, 0:4])
+
 
         self.compute_first_order_correction(E_array, self.omega, neglected_DSE_option)
         self.compute_second_order_correction(E_array, self.omega, neglected_DSE_option)
