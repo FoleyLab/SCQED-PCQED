@@ -1894,7 +1894,7 @@ class PFHamiltonianGenerator:
 
         return _singlet_states
     
-    def build_d_array(self, n_el, lambda_vector, mu_array, coherent_state=False):
+    def build_d_array(self, n_el, lambda_vector, mu_array, coherent_state=False, upper_triangular_Mu_array = False):
         """
         method to compute the array d = \lambda \cdot \mu if coherent_state==False
         or d = \lambda \cdot (\mu - <\mu>) if coherent_state == True
@@ -1909,6 +1909,12 @@ class PFHamiltonianGenerator:
             self.d_array = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
             _d_exp =self.d_array[0,0]
             self.d_array = self.d_array - _I * _d_exp
+
+        if upper_triangular_Mu_array:
+            self.d_array = self.d_array + self.d_array.T - np.diag(np.diag(self.d_array))
+
+            
+
 
     
     def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False, coherent_state_option=False):
@@ -2099,7 +2105,7 @@ class PFHamiltonianGenerator:
         self.second_order_energy_correction  = E_n_2
 
 
-    def compute_energy_to_second_order(self, E_array, lambda_vector, mu_array , coherent_state = False, neglected_DSE_option=False):
+    def compute_energy_to_second_order(self, E_array, lambda_vector, mu_array , coherent_state = False, neglected_DSE_option=False, upper_triangular_Mu_array = False,):
         """
         Add code to compute the first and second order energy corrections and store the 
         total energy to second order to the attribute self.pt2_total_energy
@@ -2110,11 +2116,8 @@ class PFHamiltonianGenerator:
     
         """
 
-        #lambda_vector = np.sqrt(1/(2 * self.omega))  * lambda_vector
 
-        #print(lambda_vector)
-
-        self.build_d_array(E_array.shape[0], lambda_vector, mu_array, coherent_state=coherent_state )
+        self.build_d_array(E_array.shape[0], lambda_vector, mu_array, coherent_state=coherent_state , upper_triangular_Mu_array= upper_triangular_Mu_array)
 
 
 
@@ -2122,8 +2125,8 @@ class PFHamiltonianGenerator:
         self.compute_second_order_correction(E_array, self.omega, neglected_DSE_option)
 
 
-        print(self.first_order_energy_correction)
-        print(self.second_order_energy_correction)
+        print("first order energy correction: " , self.first_order_energy_correction)
+        print("second order energy correction: " ,self.second_order_energy_correction)
 
 
         Corrected_Energy = E_array[0] + self.first_order_energy_correction + self.second_order_energy_correction
