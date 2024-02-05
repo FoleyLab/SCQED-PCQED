@@ -855,7 +855,7 @@ class PFHamiltonianGenerator:
         _q_yz_spin = np.repeat(_q_yz_spin, 2, axis=1)
 
         _spin_ind = np.arange(_q_xx_spin.shape[0], dtype=int) % 2
-        
+
         # there is a minus sign inherent in the quadrupole terms
         self.q_xx_spin = -1 * _q_xx_spin * (_spin_ind.reshape(-1, 1) == _spin_ind)
         self.q_yy_spin = -1 * _q_yy_spin * (_spin_ind.reshape(-1, 1) == _spin_ind)
@@ -1209,7 +1209,6 @@ class PFHamiltonianGenerator:
             self.H_PF[:_numDets, _numDets:] = self.Gmatrix + self.G_exp_so
 
         else:
-
             for i in range(self.N_p + 1):
                 bra_s = i * _numDets
                 bra_e = (i + 1) * _numDets
@@ -1289,7 +1288,7 @@ class PFHamiltonianGenerator:
                 slater_condon_dict = {
                     "A+Delta": 0.0,
                     "MuMu": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-                    "Delta" : 0.0
+                    "Delta": 0.0,
                 }
                 return slater_condon_dict
         elif det1.diff2OrLessOrbitals(det2):
@@ -1302,7 +1301,7 @@ class PFHamiltonianGenerator:
                 slater_condon_dict = {
                     "A+Delta": 0.0,
                     "MuMu": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-                    "Delta" : 0.0
+                    "Delta": 0.0,
                 }
                 return slater_condon_dict
 
@@ -1310,7 +1309,7 @@ class PFHamiltonianGenerator:
             slater_condon_dict = {
                 "A+Delta": 0.0,
                 "MuMu": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-                "Delta" : 0.0
+                "Delta": 0.0,
             }
             return slater_condon_dict
 
@@ -1322,7 +1321,6 @@ class PFHamiltonianGenerator:
         if det1.diff2OrLessOrbitals(det2):
             numUniqueOrbitals = det1.numberOfTotalDiffOrbitals(det2)
             if numUniqueOrbitals == 0:
-
                 return self.calcMuMatrixElementIdentialDet(det1)
             elif numUniqueOrbitals == 1:
                 return self.calcMuMatrixElementDiffIn1(det1, det2)
@@ -1358,7 +1356,7 @@ class PFHamiltonianGenerator:
 
         unique1, unique2, sign = det1.getUniqueOrbitalsInMixIndexListsPlusSign(det2)
         _ApD = sign * self.antiSym2eInt[unique1[0], unique1[1], unique2[0], unique2[1]]
-        _D  = sign * self.TDI_spin[unique1[0], unique1[1], unique2[0], unique2[1]]
+        _D = sign * self.TDI_spin[unique1[0], unique1[1], unique2[0], unique2[1]]
 
         M2xx = sign * self.ddxx[unique1[0], unique1[1], unique2[0], unique2[1]]
         M2yy = sign * self.ddyy[unique1[0], unique1[1], unique2[0], unique2[1]]
@@ -1375,14 +1373,13 @@ class PFHamiltonianGenerator:
         testM2 += M2xz * self.lambda_vector[0] * self.lambda_vector[2]
         testM2 += M2yz * self.lambda_vector[1] * self.lambda_vector[2]
         assert np.isclose(testM2, _D)
-        
+
         slater_condon_dict = {
             "A+Delta": _ApD,
             "MuMu": np.array([M2xx, M2yy, M2zz, M2xy, M2xz, M2yz]),
-            "Delta": _D
+            "Delta": _D,
         }
         return slater_condon_dict
-
 
     def calcMatrixElementDiffIn1(self, det1, det2, omit2E=False):
         """
@@ -1395,7 +1392,7 @@ class PFHamiltonianGenerator:
 
         # 1-electron terms for PF Hamiltonian
         Helem = self.Hspin[m, p]
-        # 1-elecron term for Delta 
+        # 1-elecron term for Delta
         Q1elem = self.Q1spin[m, p]
         # 1-electron terms for MuMu matrix
         M1xx = self.q_xx_spin[m, p]
@@ -1465,10 +1462,10 @@ class PFHamiltonianGenerator:
         # return sign * (Helem + Relem)
         slater_condon_dict = {
             "A+Delta": _ApD_elem,
-             #uncomment for MuMu including 1e and 2e terms 
+            # uncomment for MuMu including 1e and 2e terms
             "MuMu": np.array([_Mxx, _Myy, _Mzz, _Mxy, _Mxz, _Myz]),
-            #"MuMu" : sign * np.array([M2xx, M2yy, M2zz, M2xy, M2xz, M2yz]),
-            "Delta" : sign * (D2elem + Q1elem)
+            # "MuMu" : sign * np.array([M2xx, M2yy, M2zz, M2xy, M2xz, M2yz]),
+            "Delta": sign * (D2elem + Q1elem),
         }
         return slater_condon_dict
 
@@ -1552,8 +1549,6 @@ class PFHamiltonianGenerator:
             testM += M1yz * self.lambda_vector[1] * self.lambda_vector[2]
             assert np.isclose(0.5 * testM, Q1elem)
 
-
-
         length = len(spinObtList)
         if omit2E == False:
             Relem = 0.0
@@ -1608,21 +1603,21 @@ class PFHamiltonianGenerator:
         _Mxz = 0.5 * M1xz + M2xz
         _Myz = 0.5 * M1yz + M2yz
 
-        testMuMu =  _Mxx * self.lambda_vector[0] * self.lambda_vector[0]
+        testMuMu = _Mxx * self.lambda_vector[0] * self.lambda_vector[0]
         testMuMu += _Myy * self.lambda_vector[1] * self.lambda_vector[1]
         testMuMu += _Mzz * self.lambda_vector[2] * self.lambda_vector[2]
         testMuMu += _Mxy * self.lambda_vector[0] * self.lambda_vector[1]
         testMuMu += _Mxz * self.lambda_vector[0] * self.lambda_vector[2]
         testMuMu += _Myz * self.lambda_vector[1] * self.lambda_vector[2]
 
-        assert np.isclose(testMuMu, (D2elem + Q1elem) )
+        assert np.isclose(testMuMu, (D2elem + Q1elem))
 
         slater_condon_dict = {
             "A+Delta": _ApDelem,
-            # uncomment for MuMu including 1e and 2e terms 
+            # uncomment for MuMu including 1e and 2e terms
             "MuMu": np.array([_Mxx, _Myy, _Mzz, _Mxy, _Mxz, _Myz]),
-            #"MuMu" : np.array([M2xx, M2yy, M2zz, M2xy, M2xz, M2yz]),
-            "Delta" : D2elem + Q1elem
+            # "MuMu" : np.array([M2xx, M2yy, M2zz, M2xy, M2xz, M2yz]),
+            "Delta": D2elem + Q1elem,
         }
         return slater_condon_dict
 
@@ -1730,7 +1725,6 @@ class PFHamiltonianGenerator:
         return psi4_wfn
 
     def buildArraysInOrbitalBasis(self, p4_wfn):
-
         # build 1H in orbital basis
         t_1H_start = time.time()
         self.build1HSO()
@@ -1893,31 +1887,50 @@ class PFHamiltonianGenerator:
                 _sing_idx += 1
 
         return _singlet_states
-    
-    def build_d_array(self, n_el, lambda_vector, mu_array, coherent_state=False, upper_triangular_Mu_array = False):
+
+    def build_d_array(
+        self,
+        n_el,
+        lambda_vector,
+        mu_array,
+        coherent_state=False,
+        upper_triangular_Mu_array=False,
+    ):
         """
         method to compute the array d = \lambda \cdot \mu if coherent_state==False
         or d = \lambda \cdot (\mu - <\mu>) if coherent_state == True
         and store to attribute self.d_array
         """
-        
-        if coherent_state==False:
-            self.d_array = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+
+        if coherent_state == False:
+            self.d_array = np.einsum(
+                "k,ijk->ij", lambda_vector, mu_array[:n_el, :n_el, :]
+            )
 
         else:
             _I = np.eye(n_el)
-            self.d_array = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
-            _d_exp =self.d_array[0,0]
+            self.d_array = np.einsum(
+                "k,ijk->ij", lambda_vector, mu_array[:n_el, :n_el, :]
+            )
+            _d_exp = self.d_array[0, 0]
             self.d_array = self.d_array - _I * _d_exp
 
         if upper_triangular_Mu_array:
-            self.d_array = self.d_array + self.d_array.T - np.diag(np.diag(self.d_array))
+            self.d_array = (
+                self.d_array + self.d_array.T - np.diag(np.diag(self.d_array))
+            )
 
-            
-
-
-    
-    def fast_build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False, coherent_state_option=False):
+    def fast_build_pcqed_pf_hamiltonian(
+        self,
+        n_el,
+        n_ph,
+        omega,
+        lambda_vector,
+        E_array,
+        mu_array,
+        neglect_DSE=False,
+        coherent_state_option=False,
+    ):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -1936,15 +1949,14 @@ class PFHamiltonianGenerator:
 
         E_array : n_el np.array of floats
             the electronic energies
-            
-        mu_array : (n_el x n_el x 3) np.array of floats 
-            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between 
+
+        mu_array : (n_el x n_el x 3) np.array of floats
+            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between
             state i and state j
 
 
         """
 
-        
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_EL = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_PH = np.zeros((n_el * n_ph, n_el * n_ph))
@@ -1963,17 +1975,18 @@ class PFHamiltonianGenerator:
         # create _d array using einsum
         # add call to self.build_d_array(lambda_vector, mu_array, coherent_state=False)
         # and modify the line below so that _d = np.copy(self.d_array)
-        #_d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
-        #_d_exp = _d[0,0]
-        self.build_d_array(n_el, lambda_vector, mu_array, coherent_state=coherent_state_option)
+        # _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        # _d_exp = _d[0,0]
+        self.build_d_array(
+            n_el, lambda_vector, mu_array, coherent_state=coherent_state_option
+        )
         _d = np.copy(self.d_array)
-
 
         # create D array using matrix multiplication
         if neglect_DSE:
-            _D = np.zeros((n_el,n_el))
+            _D = np.zeros((n_el, n_el))
         else:
-            _D = 1/2 * _d @ _d 
+            _D = 1 / 2 * _d @ _d
 
         for n in range(n_ph):
             # diagonal indices
@@ -1981,7 +1994,7 @@ class PFHamiltonianGenerator:
             f_idx = (n + 1) * n_el
             # diagonal entries
             self.PCQED_H_PF[b_idx:f_idx, b_idx:f_idx] = _A + n * _O + _D
-            self.PCQED_H_EL[b_idx:f_idx, b_idx:f_idx] = _A 
+            self.PCQED_H_EL[b_idx:f_idx, b_idx:f_idx] = _A
             self.PCQED_H_DSE[b_idx:f_idx, b_idx:f_idx] = _D
             self.PCQED_H_PH[b_idx:f_idx, b_idx:f_idx] = n * _O
 
@@ -1993,9 +2006,13 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
-                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
- 
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m)
+                )
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m)
+                )
+
             elif n == (n_ph - 1):
                 m = n - 1
                 bra_s = n * n_el
@@ -2003,8 +2020,12 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
-                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m+1)
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m + 1)
+                )
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m + 1)
+                )
 
             else:
                 m = n + 1
@@ -2013,8 +2034,12 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d * np.sqrt(m)
-                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* _d   * np.sqrt(m)
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m)
+                )
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m)
+                )
 
                 m = n - 1
                 bra_s = n * n_el
@@ -2022,119 +2047,132 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
-                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * _d  * np.sqrt(m+1)
-                
-                
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m + 1)
+                )
+                self.PCQED_H_BLC[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * _d * np.sqrt(m + 1)
+                )
+
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
         self.PCQED_pf_eigs = np.copy(eigs)
         self.PCQED_pf_vecs = np.copy(vecs)
 
-
-    def compute_first_order_correction(self, E_array, omega, neglect_DSE=False ):
+    def compute_first_order_correction(self, E_array, neglect_DSE=False):
         """
-        Add code to compute the first order energy correction, 
+        Add code to compute the first order energy correction,
         - compute first order energy correction term using existing d array
         - store to attribute self.first_order_energy_correction
         """
 
-        #for ground state
+        # for ground state
         mu_n = 0
 
+        # initialize to zero
+        self.first_order_energy_correction = 0
 
         if neglect_DSE:
-            self.first_order_energy_correction  = 0
+            self.first_order_energy_correction = 0
         else:
             E_n_1 = 0
             for gamma in range(0, len(E_array)):
-                E_n_1 += self.d_array[mu_n][gamma]*self.d_array[gamma][mu_n]
+                E_n_1 += self.d_array[mu_n, gamma] * self.d_array[gamma, mu_n]
 
-            E_n_1 = 1/2 * E_n_1 
-            self.first_order_energy_correction = E_n_1      
-
-
-
+            E_n_1 = 1 / 2 * E_n_1
+            self.first_order_energy_correction = E_n_1
 
     def compute_second_order_correction(self, E_array, omega, neglect_DSE=False):
         """
-        Add code to compute the second order energy correction, 
+        Add code to compute the second order energy correction,
         - compute first order energy correction term using existing d array
         - store to attribute self.first_order_energy_correction
         """
 
         E_n_2 = 0
 
-        #ground electronic state
+        # ground electronic state
         mu_n = 0
 
-        #0 photons
+        # 0 photons
         m_n = 0
 
+        blc_term_1 = 0
+        blc_term_2 = 0
+        dse_term = 0
 
-
-        first_term = 0
-        second_term = 0
-        third_term = 0
-        
         for mu_l in range(0, len(E_array)):
-                for m_l in range(max(m_n-1,0), m_n+2):
-                    if(mu_l == mu_n and m_l == m_n):
-                        pass
-                    else:
+            for m_l in range(max(m_n - 1, 0), m_n + 2):
+                if mu_l == mu_n and m_l == m_n:
+                    pass
+                else:
+                    if m_l == m_n + 1:
+                        first_term += (
+                            (self.d_array[mu_l][mu_n] * np.sqrt(m_n + 1)) ** 2
+                        ) / (E_array[mu_n] - E_array[mu_l] - omega)
 
-                        if m_l == m_n + 1:
-                            first_term +=  ( (self.d_array[mu_l][mu_n] * np.sqrt(m_n+1)) ** 2 )/(E_array[mu_n] - E_array[mu_l] - omega)
+                    elif m_l == m_n - 1:
+                        second_term += (
+                            (self.d_array[mu_l][mu_n] * np.sqrt(m_n)) ** 2
+                        ) / (E_array[mu_n] - E_array[mu_l] + omega)
 
-                        elif m_l  == m_n - 1:
-                            second_term +=  ( (self.d_array[mu_l][mu_n] * np.sqrt(m_n)) ** 2 )/(E_array[mu_n] - E_array[mu_l] + omega)
+                    elif m_l == m_n and neglect_DSE == False:
+                        numerator = 0
+                        for gamma in range(0, len(E_array)):
+                            numerator += (
+                                self.d_array[mu_l][gamma] * self.d_array[gamma][mu_n]
+                            )
 
-                        elif m_l  == m_n and neglect_DSE == False:
-
-                            
-                            numerator = 0
-                            for gamma in range(0, len(E_array)):
-                                numerator += self.d_array[mu_l][gamma]*self.d_array[gamma][mu_n]
-
-
-
-                            third_term += (numerator**2) / ((E_array[mu_n] - E_array[mu_l]))
-
-
+                        third_term += (numerator**2) / (
+                            (E_array[mu_n] - E_array[mu_l])
+                        )
 
         E_n_2 = (omega / 2) * (first_term + second_term) + (0.5 * third_term)
-        self.second_order_energy_correction  = E_n_2
+        self.second_order_energy_correction = E_n_2
 
-
-    def compute_energy_to_second_order(self, E_array, lambda_vector, mu_array , coherent_state = False, neglected_DSE_option=False, upper_triangular_Mu_array = False,):
+    def compute_energy_to_second_order(
+        self,
+        E_array,
+        lambda_vector,
+        mu_array,
+        coherent_state=False,
+        neglected_DSE_option=False,
+        upper_triangular_Mu_array=False,
+    ):
         """
-        Add code to compute the first and second order energy corrections and store the 
+        Add code to compute the first and second order energy corrections and store the
         total energy to second order to the attribute self.pt2_total_energy
         - call build_d_array
         - call compute_first_order_correction
         - call compute_second_order_correctio
         - sum together with E_array element(s) which hold the zeroth-order energies
-    
+
         """
 
-
-        self.build_d_array(E_array.shape[0], lambda_vector, mu_array, coherent_state=coherent_state , upper_triangular_Mu_array= upper_triangular_Mu_array)
-
-
+        self.build_d_array(
+            E_array.shape[0],
+            lambda_vector,
+            mu_array,
+            coherent_state=coherent_state,
+            upper_triangular_Mu_array=upper_triangular_Mu_array,
+        )
 
         self.compute_first_order_correction(E_array, self.omega, neglected_DSE_option)
         self.compute_second_order_correction(E_array, self.omega, neglected_DSE_option)
 
+        print("first order energy correction: ", self.first_order_energy_correction)
+        print("second order energy correction: ", self.second_order_energy_correction)
 
-        print("first order energy correction: " , self.first_order_energy_correction)
-        print("second order energy correction: " ,self.second_order_energy_correction)
-
-
-        Corrected_Energy = E_array[0] + self.first_order_energy_correction + self.second_order_energy_correction
+        Corrected_Energy = (
+            E_array[0]
+            + self.first_order_energy_correction
+            + self.second_order_energy_correction
+        )
 
         return Corrected_Energy
-      
-    
-    def fast_build_pcqed_cs_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_array, mu_array,neglect_DSE=False):
+
+    def fast_build_pcqed_cs_hamiltonian(
+        self, n_el, n_ph, omega, lambda_vector, E_array, mu_array, neglect_DSE=False
+    ):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -2153,9 +2191,9 @@ class PFHamiltonianGenerator:
 
         E_array : n_el np.array of floats
             the electronic energies
-            
-        mu_array : (n_el x n_el x 3) np.array of floats 
-            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between 
+
+        mu_array : (n_el x n_el x 3) np.array of floats
+            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between
             state i and state j
 
 
@@ -2172,16 +2210,16 @@ class PFHamiltonianGenerator:
         _O = omega * _I
 
         # create _d array using einsum
-        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el,:n_el,:])
+        _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el, :n_el, :])
         print(f" Value of d are {_d}")
-        _d_exp = _d[0,0]
+        _d_exp = _d[0, 0]
         print(f" Value of D are {_d_exp} ")
 
         # create D array using matrix multiplication
         if neglect_DSE:
-            _D = np.zeros((n_el,n_el))
+            _D = np.zeros((n_el, n_el))
         else:
-            _D = 1/2 * _d @ _d + 1/2 * (_d_exp)**2 * _I - _d_exp * _d
+            _D = 1 / 2 * _d @ _d + 1 / 2 * (_d_exp) ** 2 * _I - _d_exp * _d
 
         for n in range(n_ph):
             # diagonal indices
@@ -2198,8 +2236,10 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2)* (_d  - _d_exp * _I)   * np.sqrt(m)
- 
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * (_d - _d_exp * _I) * np.sqrt(m)
+                )
+
             elif n == (n_ph - 1):
                 m = n - 1
                 bra_s = n * n_el
@@ -2207,7 +2247,9 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * (_d - _d_exp * _I) * np.sqrt(m+1)
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * (_d - _d_exp * _I) * np.sqrt(m + 1)
+                )
 
             else:
                 m = n + 1
@@ -2216,7 +2258,9 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * (_d - _d_exp * _I) * np.sqrt(m)
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * (_d - _d_exp * _I) * np.sqrt(m)
+                )
 
                 m = n - 1
                 bra_s = n * n_el
@@ -2224,15 +2268,17 @@ class PFHamiltonianGenerator:
                 ket_s = m * n_el
                 ket_e = (m + 1) * n_el
 
-                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = -np.sqrt( omega / 2) * (_d - _d_exp * _I) * np.sqrt(m+1)
-                
-                
+                self.PCQED_H_PF[bra_s:bra_e, ket_s:ket_e] = (
+                    -np.sqrt(omega / 2) * (_d - _d_exp * _I) * np.sqrt(m + 1)
+                )
+
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
         self.PCQED_cs_eigs = np.copy(eigs)
         self.PCQED_cs_vecs = np.copy(vecs)
 
-    
-    def build_pcqed_pf_hamiltonian(self, n_el, n_ph, omega, lambda_vector, E_R, mu_array): #, E_R, omega, lamvec, mu):
+    def build_pcqed_pf_hamiltonian(
+        self, n_el, n_ph, omega, lambda_vector, E_R, mu_array
+    ):  # , E_R, omega, lamvec, mu):
         """
         Given an array of n_el E_R values and an n_ph states with fundamental energy omega
         build the PF Hamiltonian
@@ -2245,35 +2291,38 @@ class PFHamiltonianGenerator:
 
         E_R : np.array of floats
             the electronic energies
-            
+
         omega : float
             the energy of the photonic mode
-            
+
         lamvec : np.array of floats
             the lambda vector
-            
-        mu : (n_el x n_el x 3) np.array of floats 
-            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between 
+
+        mu : (n_el x n_el x 3) np.array of floats
+            mu[i, j, k] is the kth cartesian component of the dipole moment expectation value between
             state i and state j
 
         """
         self.PCQED_H_PF = np.zeros((n_el * n_ph, n_el * n_ph))
-
 
         # take care of the diagonals first
         # bare electronic and photonic energy
         for n in range(n_ph):
             for a in range(n_el):
                 na = n * n_el + a
-                self.PCQED_H_PF[na,na] = E_R[a] + n * omega
-            
+                self.PCQED_H_PF[na, na] = E_R[a] + n * omega
+
         # diagonal dipole self energy
         for n in range(n_ph):
             for a in range(n_el):
                 na = n * n_el + a
                 for g in range(n_el):
-                    self.PCQED_H_PF[na,na] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g,a,:])
-                
+                    self.PCQED_H_PF[na, na] += (
+                        0.5
+                        * np.dot(lambda_vector, mu_array[a, g, :])
+                        * np.dot(lambda_vector, mu_array[g, a, :])
+                    )
+
         # off-diagonal dipole self energy
         for n in range(n_ph):
             for a in range(n_el):
@@ -2282,32 +2331,50 @@ class PFHamiltonianGenerator:
                     nb = n * n_el + b
                     for g in range(n_el):
                         if a != b:
-                            self.PCQED_H_PF[na, nb] += 0.5 * np.dot(lambda_vector, mu_array[a,g,:]) * np.dot(lambda_vector, mu_array[g, b, :])
-                    
+                            self.PCQED_H_PF[na, nb] += (
+                                0.5
+                                * np.dot(lambda_vector, mu_array[a, g, :])
+                                * np.dot(lambda_vector, mu_array[g, b, :])
+                            )
+
         # off-diagonal bilinear coupling
         for n in range(n_ph):
             for a in range(n_el):
                 na = n * n_el + a
-                
+
                 for m in range(n_ph):
                     for b in range(n_el):
                         mb = m * n_el + b
-                        
-                        if n == (m-1):
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na,mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m) 
-                            
-                        elif n == (m+1):
-                            #print(n, a, na, m, b, mb)
-                            self.PCQED_H_PF[na, mb] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1) 
-                            self.PCQED_H_PF[mb, na] = -np.sqrt(omega / 2) * np.dot(lambda_vector, mu_array[a,b,:]) * np.sqrt(m+1)
+
+                        if n == (m - 1):
+                            # print(n, a, na, m, b, mb)
+                            self.PCQED_H_PF[na, mb] = (
+                                -np.sqrt(omega / 2)
+                                * np.dot(lambda_vector, mu_array[a, b, :])
+                                * np.sqrt(m)
+                            )
+                            self.PCQED_H_PF[mb, na] = (
+                                -np.sqrt(omega / 2)
+                                * np.dot(lambda_vector, mu_array[a, b, :])
+                                * np.sqrt(m)
+                            )
+
+                        elif n == (m + 1):
+                            # print(n, a, na, m, b, mb)
+                            self.PCQED_H_PF[na, mb] = (
+                                -np.sqrt(omega / 2)
+                                * np.dot(lambda_vector, mu_array[a, b, :])
+                                * np.sqrt(m + 1)
+                            )
+                            self.PCQED_H_PF[mb, na] = (
+                                -np.sqrt(omega / 2)
+                                * np.dot(lambda_vector, mu_array[a, b, :])
+                                * np.sqrt(m + 1)
+                            )
 
         eigs, vecs = np.linalg.eigh(self.PCQED_H_PF)
         self.PCQED_eigs = np.copy(eigs)
         self.PCQED_vecs = np.copy(vecs)
-                            
-        
 
     # Building 1RDM
     def calc1RDMfromCIS(self, c_vec):
@@ -2383,7 +2450,6 @@ class PFHamiltonianGenerator:
 
         for p in range(self.D1.shape[0]):
             for q in range(self.D1.shape[1]):
-
                 i = p % 2
                 j = (p - i) // 2
 
