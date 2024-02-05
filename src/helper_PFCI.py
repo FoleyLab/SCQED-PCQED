@@ -2100,6 +2100,28 @@ class PFHamiltonianGenerator:
         blc_term_2 = 0
         dse_term = 0
 
+        first_term = 0
+        second_term = 0
+        third_term = 0
+        
+        mu_max = len(E_array)
+        # JJF Notes:
+        # There are two bilinear coupling terms
+        # first term has delta_{ml, mn+1} and so it can survive when mn = 0
+        # second term has delta_{ml, mn-1} and so it will not survive when mn=0
+
+        for mu_l in range(mu_n+1, mu_max):
+            # ml = 1
+            blc_term_1 += omega / 2 * self.d_array[mu_l, mu_n] / (E_array[mu_n] - E_array[mu_l] - omega)
+
+        for mu_l in range(mu_n+1, mu_max):
+            dse_inner = 0
+            for g in range(0, mu_max):
+                dse_inner += self.d_array[mu_l, g] * self.d_array[g, mu_n]
+            
+            # ml = 1
+            dse_term += 1/4 * dse_inner ** 2 / (E_array[mu_n] - E_array[mu_l])
+        
         for mu_l in range(0, len(E_array)):
             for m_l in range(max(m_n - 1, 0), m_n + 2):
                 if mu_l == mu_n and m_l == m_n:
@@ -2126,6 +2148,10 @@ class PFHamiltonianGenerator:
                             (E_array[mu_n] - E_array[mu_l])
                         )
 
+        assert np.isclose(blc_term_1, first_term)
+        assert np.isclose(blc_term_2, second_term)
+        assert np.isclose(dse_term, third_term)
+        
         E_n_2 = (omega / 2) * (first_term + second_term) + (0.5 * third_term)
         self.second_order_energy_correction = E_n_2
 
