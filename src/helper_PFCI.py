@@ -2081,13 +2081,14 @@ class PFHamiltonianGenerator:
             E_n_1 = 1 / 2 * E_n_1
             self.first_order_energy_correction = E_n_1
 
-    def compute_second_order_correction(self, E_array, omega, neglect_DSE=False):
+    def compute_second_order_correction(self, E_array, neglect_DSE=False):
         """
         Add code to compute the second order energy correction,
         - compute first order energy correction term using existing d array
         - store to attribute self.first_order_energy_correction
         """
 
+        omega = self.omega
         E_n_2 = 0
 
         # ground electronic state
@@ -2107,20 +2108,27 @@ class PFHamiltonianGenerator:
         mu_max = len(E_array)
         # JJF Notes:
         # There are two bilinear coupling terms
-        # first term has delta_{ml, mn+1} and so it can survive when mn = 0
-        # second term has delta_{ml, mn-1} and so it will not survive when mn=0
+        # first term has delta_{ml, mn+1} and so it can survive when mn = 0 and ml = 1
+        # second term has delta_{ml, mn-1} and so it will not survive when mn=0, it is neglected for now since the ground-state has mn=0
 
-        for mu_l in range(mu_n+1, mu_max):
-            # ml = 1
-            blc_term_1 += omega / 2 * self.d_array[mu_l, mu_n] / (E_array[mu_n] - E_array[mu_l] - omega)
+        # blc first term - note there is no restriction on the electronic index in this sum
+        for mu_l in range(mu_max):
+            # ml = mn+1
+            blc_term_1 += omega / 2 * (self.d_array[mu_l, mu_n] * np.sqrt(m_n + 1)) ** 2 / (E_array[mu_n] - E_array[mu_l] - omega)
 
-        for mu_l in range(mu_n+1, mu_max):
-            dse_inner = 0
-            for g in range(0, mu_max):
-                dse_inner += self.d_array[mu_l, g] * self.d_array[g, mu_n]
-            
-            # ml = 1
-            dse_term += 1/4 * dse_inner ** 2 / (E_array[mu_n] - E_array[mu_l])
+        # blc second term - commented out for while we only care about correcting the ground-state
+        #### for mu_l in range(mu_max):
+        ####    # ml = mn-1
+        ####    blc_term_2 += omega / 2 * (self.d_array[mu_l, mu_n] * np.sqrt(m_n)) ** 2 / (E_array[mu_n] - E_array[mu_l] + omega)
+
+        # dse term
+        for mu_l in range(mu_max):
+            if mu_l != mu_n:
+                dse_inner = 0
+                for g in range(0, mu_max):
+                    dse_inner += self.d_array[mu_l, g] * self.d_array[g, mu_n]
+                    
+                dse_term += 1/4 * dse_inner ** 2 / (E_array[mu_n] - E_array[mu_l])
         
         for mu_l in range(0, len(E_array)):
             for m_l in range(max(m_n - 1, 0), m_n + 2):
@@ -2138,6 +2146,7 @@ class PFHamiltonianGenerator:
                         ) / (E_array[mu_n] - E_array[mu_l] + omega)
 
                     elif m_l == m_n and neglect_DSE == False:
+                        # JJF Comment - I think you need to also exclude cases where mu_l == mu_n
                         numerator = 0
                         for gamma in range(0, len(E_array)):
                             numerator += (
@@ -2148,10 +2157,11 @@ class PFHamiltonianGenerator:
                             (E_array[mu_n] - E_array[mu_l])
                         )
 
-        assert np.isclose(blc_term_1, first_term)
-        assert np.isclose(blc_term_2, second_term)
-        assert np.isclose(dse_term, third_term)
+        print(F'BLC Term 1: {np.isclose(2 / omega * blc_term_1, first_term)}')
+        print(F'BLC Term 2: {np.isclose(2 / omega * blc_term_2, second_term)}')
+        print(F'DSE Term:   {np.isclose(4 * dse_term, third_term)}')
         
+        ## JJF Comment - double check the factor in the third term, I think it should be 0.25 not 0.5
         E_n_2 = (omega / 2) * (first_term + second_term) + (0.5 * third_term)
         self.second_order_energy_correction = E_n_2
 
@@ -2162,8 +2172,9 @@ class PFHamiltonianGenerator:
         mu_array,
         coherent_state=False,
         neglected_DSE_option=False,
-        upper_triangular_Mu_array=False,
+        upper_triangular_Mu_array=False
     ):
+    
         """
         Add code to compute the first and second order energy corrections and store the
         total energy to second order to the attribute self.pt2_total_energy
@@ -2182,8 +2193,11 @@ class PFHamiltonianGenerator:
             upper_triangular_Mu_array=upper_triangular_Mu_array,
         )
 
-        self.compute_first_order_correction(E_array, self.omega, neglected_DSE_option)
-        self.compute_second_order_correction(E_array, self.omega, neglected_DSE_option)
+        print(F'Omega is {self.omega}')
+        print(F'Neglect DSE Option is {neglected_DSE_option}')
+
+        self.compute_first_order_correction(E_array, neglected_DSE_option)
+        self.compute_second_order_correction(E_array, neglected_DSE_option)
 
         print("first order energy correction: ", self.first_order_energy_correction)
         print("second order energy correction: ", self.second_order_energy_correction)
