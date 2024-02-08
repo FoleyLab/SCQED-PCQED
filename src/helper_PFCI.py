@@ -2130,6 +2130,8 @@ class PFHamiltonianGenerator:
                     
                 dse_term += 1/4 * dse_inner ** 2 / (E_array[mu_n] - E_array[mu_l])
         
+
+        
         for mu_l in range(0, len(E_array)):
             for m_l in range(max(m_n - 1, 0), m_n + 2):
                 if mu_l == mu_n and m_l == m_n:
@@ -2157,13 +2159,16 @@ class PFHamiltonianGenerator:
                             (E_array[mu_n] - E_array[mu_l])
                         )
 
-        print(F'BLC Term 1: {np.isclose(2 / omega * blc_term_1, first_term)}')
-        print(F'BLC Term 2: {np.isclose(2 / omega * blc_term_2, second_term)}')
-        print(F'DSE Term:   {np.isclose(4 * dse_term, third_term)}')
+        #print(F'BLC Term 1: {np.isclose(2 / omega * blc_term_1, first_term)}')
+        #print(F'BLC Term 2: {np.isclose(2 / omega * blc_term_2, second_term)}')
+        #print(F'DSE Term:   {np.isclose(4 * dse_term, third_term)}')
         
         ## JJF Comment - double check the factor in the third term, I think it should be 0.25 not 0.5
-        E_n_2 = (omega / 2) * (first_term + second_term) + (0.5 * third_term)
+        E_n_2 = (omega / 2) * (first_term + second_term) + (0.25 * third_term)
         self.second_order_energy_correction = E_n_2
+
+
+
 
     def compute_energy_to_second_order(
         self,
@@ -2193,14 +2198,14 @@ class PFHamiltonianGenerator:
             upper_triangular_Mu_array=upper_triangular_Mu_array,
         )
 
-        print(F'Omega is {self.omega}')
-        print(F'Neglect DSE Option is {neglected_DSE_option}')
+        #print(F'Omega is {self.omega}')
+        #print(F'Neglect DSE Option is {neglected_DSE_option}')
 
         self.compute_first_order_correction(E_array, neglected_DSE_option)
         self.compute_second_order_correction(E_array, neglected_DSE_option)
 
-        print("first order energy correction: ", self.first_order_energy_correction)
-        print("second order energy correction: ", self.second_order_energy_correction)
+        #print("first order energy correction: ", self.first_order_energy_correction)
+        #print("second order energy correction: ", self.second_order_energy_correction)
 
         Corrected_Energy = (
             E_array[0]
