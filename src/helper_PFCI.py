@@ -2256,9 +2256,9 @@ class PFHamiltonianGenerator:
 
         # create _d array using einsum
         _d = np.einsum("k,ijk->ij", lambda_vector, mu_array[:n_el, :n_el, :])
-        print(f" Value of d are {_d}")
+        #print(f" Value of d are {_d}")
         _d_exp = _d[0, 0]
-        print(f" Value of D are {_d_exp} ")
+        #print(f" Value of D are {_d_exp} ")
 
         # create D array using matrix multiplication
         if neglect_DSE:
