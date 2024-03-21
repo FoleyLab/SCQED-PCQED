@@ -77,7 +77,8 @@ for i in range(8):
         "system": "H2" + "_" +  str(lambda_list[i]).replace(".", "_"), # <== entered manually
         "r_data" : r_list, #<== stored as a variable
         "basis_set" : "6-311G", #<== Enter manually
-        "Photon basis" : "Number State", # <== Enter Manually  
+        "Photon basis" : "Number State", # <== Enter Manually
+        "Number Photon States" : "10"
         "ci_level" : "QED-FCI", #<== entered manually
         #"number of active orbitals" : "",
         #"number of active electrons:" : "",
