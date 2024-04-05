@@ -1962,6 +1962,7 @@ class PFHamiltonianGenerator:
         self.PCQED_H_PH = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_DSE = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_BLC = np.zeros((n_el * n_ph, n_el * n_ph))
+        self.PCQED_MU = np.zeros((n_el * n_ph, n_el * n_ph))
 
         # create identity array of dimensions n_el x n_el
         _I = np.eye(n_el)
@@ -1997,6 +1998,7 @@ class PFHamiltonianGenerator:
             self.PCQED_H_EL[b_idx:f_idx, b_idx:f_idx] = _A
             self.PCQED_H_DSE[b_idx:f_idx, b_idx:f_idx] = _D
             self.PCQED_H_PH[b_idx:f_idx, b_idx:f_idx] = n * _O
+            self.PCQED_MU[b_idx:f_idx, b_idx:f_idx] = _d
 
             # off-diagonal entries
             if n == 0:
