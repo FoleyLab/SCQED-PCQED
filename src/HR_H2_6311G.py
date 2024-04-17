@@ -20,11 +20,11 @@ symmetry c1
 N_R = 200
 
 # evenly spaced grid - can replace with a different grid (e.g. Chebyshev)
-r_array = np.linspace(0.5, 2.0, N_R)
+r_array = np.linspace(0.5, 2.5, N_R)
 
 
 # number of CI roots to compute 
-num_roots = 5
+num_roots = 12
 
 # size of energy array will be num_roots x N_R
 # energy_array = np.zeros((num_roots, N_R))
