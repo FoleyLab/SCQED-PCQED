@@ -1,3 +1,6 @@
+src/*.pyc
+*.npy
+src/*.npy
 *.swp
 output.dat
 timer.dat
