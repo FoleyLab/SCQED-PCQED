@@ -1759,6 +1759,7 @@ class PFHamiltonianGenerator:
         self.build2MuSO()
 
     # Some post-processing methods
+
     def compute_dipole_moment(self, braI, ketJ):
         """
         Compute the dipole moment expectation value  using CIvecs indexed
@@ -1772,6 +1773,7 @@ class PFHamiltonianGenerator:
 
         # x-component
         _tmpX = np.dot(self.MU_X, self.CIvecs[:, ketJ])
+        #print(" shape of _tmpX is", np.shape(_tmpX))
         _dm[0] = np.dot(self.CIvecs[:, braI].T, _tmpX)
 
         # y-component
@@ -1809,6 +1811,15 @@ class PFHamiltonianGenerator:
         _DSEyz = np.dot(self.CIvecs[:, braI], _tmpDSEyz)
 
         return np.array([_DSExx, _DSEyy, _DSEzz, _DSExy, _DSExz, _DSEyz])
+    
+    def fast_compute_dipole_moments(self):
+        _dim = len(self.CIeigs)
+        test_x = np.einsum("iI,ik,kJ->IJ",self.CIvecs, self.MU_X, self.CIvecs, optimize=True) + np.eye(_dim) * self.mu_nuc[0]
+        test_y = np.einsum("iI,ik,kJ->IJ",self.CIvecs, self.MU_Y, self.CIvecs, optimize=True) + np.eye(_dim) * self.mu_nuc[1]
+        test_z = np.einsum("iI,ik,kJ->IJ",self.CIvecs, self.MU_Z, self.CIvecs, optimize=True) + np.eye(_dim) * self.mu_nuc[2]
+        return np.array([test_x, test_y, test_z]).T
+
+
 
     def compute_dipole_moments(self, states):
         """
@@ -1962,6 +1973,7 @@ class PFHamiltonianGenerator:
         self.PCQED_H_PH = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_DSE = np.zeros((n_el * n_ph, n_el * n_ph))
         self.PCQED_H_BLC = np.zeros((n_el * n_ph, n_el * n_ph))
+        self.PCQED_MU = np.zeros((n_el * n_ph, n_el * n_ph))
 
         # create identity array of dimensions n_el x n_el
         _I = np.eye(n_el)
@@ -1997,6 +2009,7 @@ class PFHamiltonianGenerator:
             self.PCQED_H_EL[b_idx:f_idx, b_idx:f_idx] = _A
             self.PCQED_H_DSE[b_idx:f_idx, b_idx:f_idx] = _D
             self.PCQED_H_PH[b_idx:f_idx, b_idx:f_idx] = n * _O
+            self.PCQED_MU[b_idx:f_idx, b_idx:f_idx] = _d
 
             # off-diagonal entries
             if n == 0:
