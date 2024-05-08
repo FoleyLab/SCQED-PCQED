@@ -1,0 +1,29 @@
+
+Start SCF iterations:
+
+Canonical RHF One-electron energy = -12.6946346236296055
+CQED-RHF One-electron energy      = -12.6946346236296055
+Nuclear repulsion energy          = 1.1339511657214287
+Dipole energy                     = 0.0000000000000000
+SCF Iteration   1: Energy = -7.8605386610570473   dE = -7.86054E+00   dRMS = 1.78646E-13
+SCF Iteration   2: Energy = -7.8605386610570420   dE =  5.32907E-15   dRMS = 3.97604E-14
+Total time for SCF iterations: 0.000 seconds 
+
+QED-RHF   energy: -7.86053866 hartree
+Psi4  SCF energy: -7.86053866 hartree
+ Completed QED-RHF in 0.18323612213134766 seconds
+ Completed 1HSO Build in 4.982948303222656e-05 seconds
+ Completed ERI Build in 0.0011551380157470703 seconds 
+ Completed 2D build in 0.00010800361633300781 seconds
+ Completed 1G build in 1.3113021850585938e-05 seconds
+ Completed the Dipole Matrix Build in 3.1948089599609375e-05 seconds
+ Completed determinant list in 0.0004730224609375 seconds 
+ Completed constant offset matrix in 0.0001811981201171875 seconds
+ Completed Hamiltonian build in 0.6973989009857178 seconds
+ Length of dz is 3600, increment is 180
+[ 180  360  540  720  900 1080 1260 1440 1620 1800 1980 2160 2340 2520
+ 2700 2880 3060 3240 3420 3600]
+ 1980, -2.9773962324e+00,-2.1846414950e+00,-2.0247879197e+00,-2.0023691171e+00,-1.7701557467e+00,-1.7271189665e+00
+ 2160, -2.9773962317e+00,-2.1846414949e+00,-2.0247879174e+00,-2.0023691142e+00,-1.7701557232e+00,-1.7271189274e+00
+ 2340, -2.9773962314e+00,-2.1846414949e+00,-2.0247879171e+00,-2.0023691139e+00,-1.7701557215e+00,-1.7271189156e+00
+ 2520, -2.9773962046e+00,-2.1846414728e+00,-2.0247878939e+00,-2.0023690880e+00,-1.7701556116e+00,-1.7271185195e+00
